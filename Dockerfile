@@ -1,8 +1,11 @@
 FROM gcc:15.2.0
 
-COPY ./judge.sh .
-RUN chmod +x judge.sh
+COPY ./sandbox.sh .
+RUN chmod +x sandbox.sh
+
+RUN useradd -m sandboxuser
+USER sandboxuser
 
 WORKDIR /submission
 
-CMD ["/judge.sh"]
+CMD ["/sandbox.sh"]
