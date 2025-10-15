@@ -1,76 +1,43 @@
+use clap::Parser;
 use std::{
     fs::{self},
     path::Path,
-    process::Command,
 };
 
-enum SubmissionResult {
-    CompilationFailed,
-    ExecutionFailed,
-    WrongAnswer,
-    Accepted,
+use executor::{ExecutionContext, Executor, Language};
+
+#[derive(Parser)]
+#[command(about)]
+struct Args {
+    #[arg(short, long)]
+    source: String,
+
+    #[arg(short, long)]
+    input: String,
+
+    #[arg(short, long)]
+    expected: String,
 }
 
-fn main() {
-    let args: Vec<_> = std::env::args().collect();
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let args = Args::parse();
 
-    if args.len() < 4
-        || !args[1].ends_with(".c")
-        || !args[2].ends_with(".txt")
-        || !args[3].ends_with(".txt")
-    {
-        return;
-    }
+    let path = Path::new(&args.source);
 
-    let path = Path::new("submissions/0");
-    let source = args[1].clone();
-    let input = args[2].clone();
-    let expected = args[3].clone();
-    let output = path.join("output.txt");
+    let ext = path
+        .extension()
+        .and_then(|e| e.to_str())
+        .ok_or("The source code path must be valid!")?;
+    let language = Language::try_from(ext)?;
 
-    fs::create_dir_all(path).unwrap();
-    fs::copy(&source, path.join("source.c")).unwrap();
-    fs::copy(&input, path.join("input.txt")).unwrap();
-    fs::copy(&expected, path.join("expected.txt")).unwrap();
-    fs::File::create(&output).unwrap();
+    let executor = Executor::default();
+    let results = executor.execute(ExecutionContext {
+        language,
+        code: fs::read_to_string(args.source).unwrap(),
+        input: fs::read_to_string(args.input).unwrap(),
+    });
 
-    let build = Command::new("docker")
-        .args(["build", ".", "-t", "sandbox"])
-        .output()
-        .expect("Failed to build");
+    println!("{:#?}", results);
 
-    if !build.status.success() {
-        eprintln!("Build failed");
-        return;
-    }
-
-    let run = Command::new("docker")
-        .args([
-            "run",
-            "--rm",
-            "--network",
-            "none",
-            "--cpus=1",
-            "--memory=64m",
-            "--pids-limit=64",
-            "-v",
-            "./submissions/0/:/submission/",
-            "sandbox",
-        ])
-        .output()
-        .expect("Failed to run");
-
-    let status = run.status.code().unwrap_or(-1);
-
-    if status == 0 {
-        if fs::read(expected).unwrap() == fs::read(output).unwrap() {
-            println!("Correct Answer!");
-        } else {
-            println!("Wrong Answer!");
-        }
-    } else {
-        println!("An error has occurred");
-    }
-
-    fs::remove_dir_all(path).unwrap();
+    Ok(())
 }
