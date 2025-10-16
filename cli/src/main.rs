@@ -35,6 +35,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         language,
         code: fs::read_to_string(args.source).unwrap(),
         input: fs::read_to_string(args.input).unwrap(),
+        time_limit_ms: None,
     });
 
     println!("{:#?}", results);
