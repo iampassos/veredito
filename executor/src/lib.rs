@@ -4,6 +4,7 @@ use std::{fs, path::Path, process::Command, time::Instant};
 #[derive(Debug)]
 pub enum Language {
     C,
+    Python,
 }
 
 impl TryFrom<&str> for Language {
@@ -12,6 +13,7 @@ impl TryFrom<&str> for Language {
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value.to_lowercase().as_str() {
             "c" => Ok(Self::C),
+            "py" | "python" => Ok(Self::Python),
             _ => Err("The language isn't supported"),
         }
     }
@@ -21,6 +23,7 @@ impl Language {
     pub fn extension(&self) -> &str {
         match self {
             Self::C => ".c",
+            Self::Python => ".py",
         }
     }
 
@@ -29,12 +32,16 @@ impl Language {
             Self::C => {
                 r#"gcc code.c -o binary 2> error.txt || exit 1; timeout $TIME_LIMIT bash -c './binary < input.txt > output.txt 2>> error.txt; CODE=$?; [ $CODE -eq 0 ] && exit 0 || [ $CODE -eq 137 ] && exit 137 || exit 2'"#
             }
+            Self::Python => {
+                r#"timeout $TIME_LIMIT bash -c 'python3 code.py < input.txt > output.txt 2> error.txt; CODE=$?; [ $CODE -eq 0 ] && exit 0 || [ $CODE -eq 1 ] && exit 2 || [ $CODE -eq 137 ] && exit 137 || exit $CODE'"#
+            }
         }
     }
 
     pub fn image(&self) -> &str {
         match self {
             Self::C => "sandbox-c",
+            Self::Python => "sandbox-py",
         }
     }
 }
@@ -181,31 +188,69 @@ mod tests {
 
     #[test]
     fn fails_c_compilation() {
-        let code = r#"int main() { return }"#.into();
+        let code = "int main() { return }".into();
         let result = execute(Language::C, code, "".into(), None);
         assert_eq!(result.status, ExecutionStatus::CompilationFailed);
     }
 
     #[test]
     fn fails_c_runtime() {
-        let code = r#"int main() { int a = 10 / 0; return 0; }"#.into();
+        let code = "int main() { int a = 10 / 0; return 0; }".into();
         let result = execute(Language::C, code, "".into(), None);
         assert_eq!(result.status, ExecutionStatus::RuntimeError);
     }
 
     #[test]
     fn time_limit_exceeded_c() {
-        let code = r#"int main() { while(1) ; }"#.into();
+        let code = "int main() { while(1) ; }".into();
         let result = execute(Language::C, code, "".into(), Some(10));
         assert_eq!(result.status, ExecutionStatus::TimeLimitExceeded);
     }
 
     #[test]
     fn memory_limit_exceeded_c() {
-        let code = r#"#include <stdlib.h>
-        int main() { while(1) malloc(1024 * 1024); return 0; }"#
-            .into();
+        let code =
+            "#include <stdlib.h>\nint main() { while(1) malloc(1024 * 1024); return 0; }".into();
         let result = execute(Language::C, code, "".into(), None);
+        assert_eq!(result.status, ExecutionStatus::MemoryLimitExceeded);
+    }
+
+    #[test]
+    fn runs_python_program() {
+        let code =
+            "arr = [int(input()) for _ in range(10)]\nfor i in reversed(arr):\n print(i)".into();
+        let input = "1\n2\n3\n4\n5\n6\n7\n8\n9\n10".into();
+        let output = "10\n9\n8\n7\n6\n5\n4\n3\n2\n1\n";
+        let result = execute(Language::Python, code, input, None);
+        assert_eq!(result.status, ExecutionStatus::Success);
+        assert_eq!(result.output, output);
+    }
+
+    #[test]
+    fn fails_python_syntax() {
+        let code = "print(".into();
+        let result = execute(Language::Python, code, "".into(), None);
+        assert_eq!(result.status, ExecutionStatus::RuntimeError);
+    }
+
+    #[test]
+    fn fails_python_runtime() {
+        let code = "1/0".into();
+        let result = execute(Language::Python, code, "".into(), None);
+        assert_eq!(result.status, ExecutionStatus::RuntimeError);
+    }
+
+    #[test]
+    fn time_limit_exceeded_python() {
+        let code = "while(True):\n pass".into();
+        let result = execute(Language::Python, code, "".into(), Some(10));
+        assert_eq!(result.status, ExecutionStatus::TimeLimitExceeded);
+    }
+
+    #[test]
+    fn memory_limit_exceeded_python() {
+        let code = "a = ' ' * (100*1024*1024)".into();
+        let result = execute(Language::Python, code, "".into(), None);
         assert_eq!(result.status, ExecutionStatus::MemoryLimitExceeded);
     }
 }
