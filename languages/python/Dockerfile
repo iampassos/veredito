@@ -1,6 +1,6 @@
 FROM alpine:latest
 
-RUN apk add --no-cache python3 musl-dev coreutils util-linux bash
+RUN apk add --no-cache python3 musl-dev coreutils util-linux
 
 ARG USER_ID=1000
 ARG GROUP_ID=1000
@@ -11,4 +11,4 @@ USER executor
 
 WORKDIR /submission
 
-CMD ["/bin/bash"]
+CMD ["/bin/sh"]

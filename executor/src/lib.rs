@@ -30,10 +30,10 @@ impl Language {
     pub fn execution(&self) -> &str {
         match self {
             Self::C => {
-                r#"gcc code.c -o binary 2> error.txt || exit 1; timeout $TIME_LIMIT bash -c './binary < input.txt > output.txt 2>> error.txt; CODE=$?; [ $CODE -eq 0 ] && exit 0 || [ $CODE -eq 137 ] && exit 137 || exit 2'"#
+                r#"gcc code.c -o binary 2> error.txt || exit 1; timeout $TIME_LIMIT sh -c './binary < input.txt > output.txt 2>> error.txt; CODE=$?; [ $CODE -eq 0 ] && exit 0 || [ $CODE -eq 137 ] && exit 137 || exit 2'"#
             }
             Self::Python => {
-                r#"timeout $TIME_LIMIT bash -c 'python3 code.py < input.txt > output.txt 2> error.txt; CODE=$?; [ $CODE -eq 0 ] && exit 0 || [ $CODE -eq 1 ] && exit 2 || [ $CODE -eq 137 ] && exit 137 || exit $CODE'"#
+                r#"timeout $TIME_LIMIT sh -c 'python3 code.py < input.txt > output.txt 2> error.txt; CODE=$?; [ $CODE -eq 0 ] && exit 0 || [ $CODE -eq 1 ] && exit 2 || [ $CODE -eq 137 ] && exit 137 || exit $CODE'"#
             }
         }
     }
@@ -133,7 +133,7 @@ impl Executor {
                 "-v",
                 &format!("./{str}/:/submission/"),
                 context.language.image(),
-                "bash",
+                "sh",
                 "-c",
                 context.language.execution(),
             ])
