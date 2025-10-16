@@ -27,7 +27,7 @@ impl Language {
     pub fn execution(&self) -> &str {
         match self {
             Self::C => {
-                r#"(gcc code.c -o binary 2> error.txt || exit 1) && timeout $TIME_LIMIT bash -c './binary < input.txt > output.txt 2>> error.txt; CODE=$?; [ $CODE -eq 0 ] && exit 0 || [ $CODE -eq 137 ] && exit 137 || exit 2'"#
+                r#"gcc code.c -o binary 2> error.txt || exit 1; timeout $TIME_LIMIT bash -c './binary < input.txt > output.txt 2>> error.txt; CODE=$?; [ $CODE -eq 0 ] && exit 0 || [ $CODE -eq 137 ] && exit 137 || exit 2'"#
             }
         }
     }
@@ -46,7 +46,7 @@ pub enum ExecutionStatus {
     RuntimeError,
     TimeLimitExceeded,
     MemoryLimitExceeded,
-    InternalError,
+    InternalError(i32),
     Unknown(i32),
 }
 
@@ -58,7 +58,7 @@ impl From<i32> for ExecutionStatus {
             2 => Self::RuntimeError,
             124 => Self::TimeLimitExceeded,
             137 => Self::MemoryLimitExceeded,
-            125..=127 => Self::InternalError,
+            125..=127 => Self::InternalError(value),
             _ => Self::Unknown(value),
         }
     }
