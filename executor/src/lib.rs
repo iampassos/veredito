@@ -20,14 +20,14 @@ impl TryFrom<&str> for Language {
 }
 
 impl Language {
-    pub fn extension(&self) -> &str {
+    pub fn extension(&self) -> &'static str {
         match self {
             Self::C => ".c",
             Self::Python => ".py",
         }
     }
 
-    pub fn execution(&self) -> &str {
+    pub fn execution(&self) -> &'static str {
         match self {
             Self::C => {
                 r#"gcc code.c -o binary 2> error.txt || exit 1; timeout $TIME_LIMIT sh -c './binary < input.txt > output.txt 2>> error.txt; CODE=$?; [ $CODE -eq 0 ] && exit 0 || [ $CODE -eq 137 ] && exit 137 || exit 2'"#
@@ -38,11 +38,15 @@ impl Language {
         }
     }
 
-    pub fn image(&self) -> &str {
+    pub fn docker_image(&self) -> &'static str {
         match self {
             Self::C => "sandbox-c",
             Self::Python => "sandbox-py",
         }
+    }
+
+    pub fn supported() -> &'static [Self] {
+        &[Self::C, Self::Python]
     }
 }
 
@@ -132,7 +136,7 @@ impl Executor {
                 "--security-opt=no-new-privileges",
                 "-v",
                 &format!("./{str}/:/submission/"),
-                context.language.image(),
+                context.language.docker_image(),
                 "sh",
                 "-c",
                 context.language.execution(),
