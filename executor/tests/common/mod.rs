@@ -1,4 +1,6 @@
-use executor::{ExecutionContext, ExecutionResult, Executor, Language};
+use executor::{
+    context::ExecutionContext, executor::Executor, language::Language, result::ExecutionResult,
+};
 
 pub fn execute(
     language: Language,
@@ -7,12 +9,14 @@ pub fn execute(
     time_limit_ms: Option<u32>,
 ) -> ExecutionResult {
     let executor = Executor::default();
+    let context = ExecutionContext::builder()
+        .language(language)
+        .code(code)
+        .input(input)
+        .time_limit_ms(time_limit_ms.unwrap_or(1_000))
+        .build();
+
     executor
-        .execute(ExecutionContext {
-            language,
-            code,
-            input,
-            time_limit_ms,
-        })
+        .execute(context)
         .expect("Error during execution test")
 }

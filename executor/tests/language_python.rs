@@ -1,4 +1,4 @@
-use executor::{ExecutionStatus, Language};
+use executor::{language::Language, result::ExecutionStatus};
 
 mod common;
 
