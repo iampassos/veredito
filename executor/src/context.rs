@@ -47,7 +47,7 @@ impl Default for ExecutionContextBuilder {
 }
 
 impl ExecutionContextBuilder {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self::default()
     }
 
