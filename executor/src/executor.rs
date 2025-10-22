@@ -52,10 +52,10 @@ impl Executor {
                 "--security-opt=no-new-privileges",
                 "-v",
                 &format!("./{str}/:/submission/"),
-                context.language.docker_image(),
+                &format!("sandbox-{}", context.language.to_string().to_lowercase()),
                 "sh",
                 "-c",
-                context.language.execution(),
+                "run.sh",
             ])
             .output()?;
 

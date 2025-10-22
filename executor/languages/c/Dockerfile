@@ -2,6 +2,9 @@ FROM alpine:latest
 
 RUN apk add --no-cache gcc musl-dev coreutils util-linux
 
+COPY run.sh /usr/local/bin/run.sh
+RUN chmod +x /usr/local/bin/run.sh
+
 ARG USER_ID=1000
 ARG GROUP_ID=1000
 
