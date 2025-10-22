@@ -5,10 +5,16 @@ start=$(date +%s%3N)
 timeout "$TIME_LIMIT" sh -c '
     if [ -z "$( ls -A './inputs' )" ]; then
         python3 code.py > ./inputs/0.out 2>> error.txt
+        exit $?
     else
         for input in ./inputs/*.in; do
             output="${input%.in}.out"
             python3 code.py < "$input" > "$output" 2> error.txt
+            status=$?
+
+           if [ $status -ne 0 ]; then
+                exit $status
+            fi
         done
     fi
 '

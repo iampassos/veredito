@@ -3,50 +3,61 @@ use executor::{ExecutionStatus, Language};
 mod common;
 
 #[test]
-fn runs_c_program() {
+fn run_program_successfully() {
     let code = r#"#include <stdio.h>
-        int main() { int n; scanf("%d", &n); int arr[n]; for (int i = 0; i < n; i++) scanf("%d", &arr[i]); for (int i = 0; i < n; i++) printf("%d\n", arr[n - i - 1]); return 0; }"#
+            int main() { int n1, n2; scanf("%d %d", &n1, &n2); printf("%d\n", n1 * n2); return 0; }"#
         .into();
-    let inputs = vec![
-        "10\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10".into(),
-        "5\n1\n2\n3\n4\n5\n".into(),
-        "3\n1\n2\n3\n".into(),
-    ];
 
-    let result = common::execute(Language::C, code, inputs, None);
-
-    assert_eq!(result.status, ExecutionStatus::Success, "{result:#?}");
-    assert_eq!(
-        result.outputs.first().unwrap(),
-        "10\n9\n8\n7\n6\n5\n4\n3\n2\n1\n"
+    let result = common::execute(
+        Language::C,
+        code,
+        vec!["10 10".into(), "20 20".into(), "30 30".into()],
+        None,
     );
-    assert_eq!(result.outputs.get(1).unwrap(), "5\n4\n3\n2\n1\n");
-    assert_eq!(result.outputs.get(2).unwrap(), "3\n2\n1\n");
+
+    assert_eq!(result.status, ExecutionStatus::Success);
+    assert_eq!(result.outputs, ["100\n", "400\n", "900\n"]);
 }
 
 #[test]
-fn fails_c_compilation() {
+fn fails_on_one_test_case_fail() {
+    let code = r#"#include <stdio.h>
+            int main() { int n; scanf("%d", &n); if (n == 10) return 2; return 0; }"#
+        .into();
+
+    let result = common::execute(
+        Language::C,
+        code,
+        vec!["5".into(), "10".into(), "20".into()],
+        None,
+    );
+
+    assert_eq!(result.status, ExecutionStatus::RuntimeError);
+}
+
+#[test]
+fn fails_on_compilation_error() {
     let code = "int main() { return }".into();
     let result = common::execute(Language::C, code, vec![], None);
     assert_eq!(result.status, ExecutionStatus::CompilationFailed);
 }
 
 #[test]
-fn fails_c_runtime() {
+fn fails_on_runtime_error() {
     let code = "int main() { int a = 10 / 0; return 0; }".into();
     let result = common::execute(Language::C, code, vec![], None);
     assert_eq!(result.status, ExecutionStatus::RuntimeError);
 }
 
 #[test]
-fn time_limit_exceeded_c() {
+fn exceeds_time_limit() {
     let code = "int main() { while(1) ; }".into();
     let result = common::execute(Language::C, code, vec![], Some(10));
     assert_eq!(result.status, ExecutionStatus::TimeLimitExceeded);
 }
 
 #[test]
-fn memory_limit_exceeded_c() {
+fn exceeds_memory_limit() {
     let code = "#include <stdlib.h>\nint main() { while(1) malloc(1024 * 1024); return 0; }".into();
     let result = common::execute(Language::C, code, vec![], None);
     assert_eq!(result.status, ExecutionStatus::MemoryLimitExceeded);

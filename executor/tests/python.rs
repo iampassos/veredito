@@ -3,50 +3,57 @@ use executor::{ExecutionStatus, Language};
 mod common;
 
 #[test]
-fn runs_python_program() {
-    let code =
-        "n=int(input())\narr = [int(input()) for _ in range(n)]\nfor i in reversed(arr):\n print(i)"
-            .into();
-    let inputs = vec![
-        "10\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10".into(),
-        "5\n1\n2\n3\n4\n5\n".into(),
-        "3\n1\n2\n3\n".into(),
-    ];
+fn run_program_successfully() {
+    let code = "print(int(input()) * int(input()))".into();
 
-    let result = common::execute(Language::Python, code, inputs, None);
+    let result = common::execute(
+        Language::Python,
+        code,
+        vec!["10\n10".into(), "20\n20".into(), "30\n30".into()],
+        None,
+    );
 
     assert_eq!(result.status, ExecutionStatus::Success);
-    assert_eq!(
-        result.outputs.first().unwrap(),
-        "10\n9\n8\n7\n6\n5\n4\n3\n2\n1\n"
-    );
-    assert_eq!(result.outputs.get(1).unwrap(), "5\n4\n3\n2\n1\n");
-    assert_eq!(result.outputs.get(2).unwrap(), "3\n2\n1\n");
+    assert_eq!(result.outputs, ["100\n", "400\n", "900\n"]);
 }
 
 #[test]
-fn fails_python_syntax() {
+fn fails_on_one_test_case_fail() {
+    let code = "if int(input()) == 10: raise Exception('')".into();
+
+    let result = common::execute(
+        Language::Python,
+        code,
+        vec!["5".into(), "10".into(), "20".into()],
+        None,
+    );
+
+    assert_eq!(result.status, ExecutionStatus::RuntimeError);
+}
+
+#[test]
+fn fails_on_syntax_error() {
     let code = "print(".into();
     let result = common::execute(Language::Python, code, vec![], None);
     assert_eq!(result.status, ExecutionStatus::RuntimeError);
 }
 
 #[test]
-fn fails_python_runtime() {
+fn fails_on_runtime_error() {
     let code = "1/0".into();
     let result = common::execute(Language::Python, code, vec![], None);
     assert_eq!(result.status, ExecutionStatus::RuntimeError);
 }
 
 #[test]
-fn time_limit_exceeded_python() {
+fn exceeds_time_limit() {
     let code = "while(True):\n pass".into();
     let result = common::execute(Language::Python, code, vec![], Some(10));
     assert_eq!(result.status, ExecutionStatus::TimeLimitExceeded);
 }
 
 #[test]
-fn memory_limit_exceeded_python() {
+fn exceeds_memory_limit() {
     let code = "a = ' ' * (100*1024*1024)".into();
     let result = common::execute(Language::Python, code, vec![], None);
     assert_eq!(result.status, ExecutionStatus::MemoryLimitExceeded);
