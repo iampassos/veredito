@@ -1,11 +1,12 @@
 #!/bin/sh
-set -e
 
 gcc code.c -o binary 2> error.txt || exit 1
 
-set +e
+if [ $? -ne 0 ]; then
+    exit 1
+fi
 
-timeout $TIME_LIMIT ./binary < input.txt > output.txt 2>> error.txt
+timeout "$TIME_LIMIT" ./binary < input.txt > output.txt 2>> error.txt
 status=$?
 
 case $status in
