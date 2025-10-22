@@ -71,7 +71,7 @@ impl Executor {
             output,
             error,
             time_ms: start.elapsed().as_millis() as u32,
-            time_execution_ms: time.trim().parse()?,
+            time_execution_ms: time.trim().parse().unwrap_or(0),
         })
     }
 }
