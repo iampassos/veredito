@@ -32,6 +32,7 @@ impl Executor {
         )?;
         fs::File::create(path.join("output.txt"))?;
         fs::File::create(path.join("error.txt"))?;
+        fs::File::create(path.join("time.txt"))?;
 
         let start = Instant::now();
 
@@ -61,6 +62,7 @@ impl Executor {
 
         let output = fs::read_to_string(path.join("output.txt"))?;
         let error = fs::read_to_string(path.join("error.txt"))?;
+        let time = fs::read_to_string(path.join("time.txt"))?;
 
         fs::remove_dir_all(path)?;
 
@@ -69,6 +71,7 @@ impl Executor {
             output,
             error,
             time_ms: start.elapsed().as_millis() as u32,
+            time_execution_ms: time.trim().parse()?,
         })
     }
 }

@@ -51,4 +51,5 @@ pub struct ExecutionResult {
     pub output: String,
     pub error: String,
     pub time_ms: u32,
+    pub time_execution_ms: u32,
 }
