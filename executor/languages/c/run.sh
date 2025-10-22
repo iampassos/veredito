@@ -8,7 +8,16 @@ fi
 
 start=$(date +%s%3N)
 
-timeout "$TIME_LIMIT" ./binary < input.txt > output.txt 2>> error.txt
+timeout "$TIME_LIMIT" sh -c '
+    if [ -z "$( ls -A './inputs' )" ]; then
+        ./binary > ./inputs/0.out 2>> error.txt
+    else
+        for input in ./inputs/*.in; do
+            output="${input%.in}.out"
+            ./binary < "$input" > "$output" 2>> error.txt
+        done
+    fi
+'
 status=$?
 
 end=$(date +%s%3N)

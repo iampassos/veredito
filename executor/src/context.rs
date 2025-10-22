@@ -4,7 +4,7 @@ use crate::Language;
 pub struct ExecutionContext {
     pub(crate) language: Language,
     pub(crate) code: String,
-    pub(crate) input: String,
+    pub(crate) inputs: Vec<String>,
     pub(crate) time_limit_ms: u32,
 }
 
@@ -12,13 +12,13 @@ impl ExecutionContext {
     pub fn new(
         language: Language,
         code: String,
-        input: String,
+        inputs: Vec<String>,
         time_limit_ms: u32,
     ) -> ExecutionContext {
         Self {
             language,
             code,
-            input,
+            inputs,
             time_limit_ms,
         }
     }
@@ -31,8 +31,8 @@ impl ExecutionContext {
 pub struct ExecutionContextBuilder {
     language: Option<Language>,
     code: Option<String>,
-    input: Option<String>,
-    time_limit_ms: Option<u32>,
+    inputs: Vec<String>,
+    time_limit_ms: u32,
 }
 
 impl Default for ExecutionContextBuilder {
@@ -40,8 +40,8 @@ impl Default for ExecutionContextBuilder {
         Self {
             language: None,
             code: None,
-            input: None,
-            time_limit_ms: Some(1_000),
+            inputs: vec![],
+            time_limit_ms: 1_000,
         }
     }
 }
@@ -61,13 +61,18 @@ impl ExecutionContextBuilder {
         self
     }
 
-    pub fn input(mut self, input: String) -> Self {
-        self.input = Some(input);
+    pub fn add_input(mut self, input: String) -> Self {
+        self.inputs.push(input);
+        self
+    }
+
+    pub fn inputs(mut self, inputs: Vec<String>) -> Self {
+        self.inputs = inputs;
         self
     }
 
     pub fn time_limit_ms(mut self, time_limit_ms: u32) -> Self {
-        self.time_limit_ms = Some(time_limit_ms);
+        self.time_limit_ms = time_limit_ms;
         self
     }
 
@@ -75,8 +80,8 @@ impl ExecutionContextBuilder {
         ExecutionContext {
             language: self.language.expect("Language is required"),
             code: self.code.expect("Code is required"),
-            input: self.input.expect("Input is required"),
-            time_limit_ms: self.time_limit_ms.unwrap_or_default(),
+            inputs: self.inputs,
+            time_limit_ms: self.time_limit_ms,
         }
     }
 }

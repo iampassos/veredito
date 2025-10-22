@@ -1,9 +1,17 @@
 #!/bin/sh
-set +e
 
 start=$(date +%s%3N)
 
-timeout "$TIME_LIMIT" python3 code.py < input.txt > output.txt 2> error.txt
+timeout "$TIME_LIMIT" sh -c '
+    if [ -z "$( ls -A './inputs' )" ]; then
+        python3 code.py > ./inputs/0.out 2>> error.txt
+    else
+        for input in ./inputs/*.in; do
+            output="${input%.in}.out"
+            python3 code.py < "$input" > "$output" 2> error.txt
+        done
+    fi
+'
 status=$?
 
 end=$(date +%s%3N)

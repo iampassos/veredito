@@ -20,14 +20,19 @@ impl Executor {
 
         let str = format!("submissions/{id}");
         let path = Path::new(&str);
+        let inputs_path = path.join("inputs/");
 
-        fs::create_dir_all(path).unwrap();
-        fs::write(path.join("input.txt"), context.input.as_bytes())?;
+        fs::create_dir_all(&inputs_path).unwrap();
+
+        for (i, input) in context.inputs.iter().enumerate() {
+            fs::write(inputs_path.join(format!("{i}.in")), input.as_bytes())?;
+            fs::File::create(inputs_path.join(format!("{i}.out")))?;
+        }
+
         fs::write(
             path.join(format!("code{}", context.language.extension())),
             context.code.as_bytes(),
         )?;
-        fs::File::create(path.join("output.txt"))?;
         fs::File::create(path.join("error.txt"))?;
         fs::File::create(path.join("time.txt"))?;
 
@@ -57,7 +62,15 @@ impl Executor {
             ])
             .output()?;
 
-        let output = fs::read_to_string(path.join("output.txt"))?;
+        let mut outputs: Vec<String> = vec![];
+
+        for entry in fs::read_dir(&inputs_path)? {
+            let entry = entry?;
+            if entry.path().extension().is_some_and(|e| e == "out") {
+                outputs.push(fs::read_to_string(entry.path())?);
+            }
+        }
+
         let error = fs::read_to_string(path.join("error.txt"))?;
         let time = fs::read_to_string(path.join("time.txt"))?;
 
@@ -65,7 +78,7 @@ impl Executor {
 
         Ok(ExecutionResult {
             status: ExecutionStatus::from(run.status.code().unwrap_or(-1)),
-            output,
+            outputs,
             error,
             time_ms: start.elapsed().as_millis() as u32,
             time_execution_ms: time.trim().parse().unwrap_or(0),

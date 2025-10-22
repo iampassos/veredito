@@ -45,7 +45,7 @@ fn main() -> Result<()> {
         let context = ExecutionContext::builder()
             .language(Language::try_from(source.extension().unwrap().to_str().unwrap()).unwrap())
             .code(fs::read_to_string(source)?)
-            .input(fs::read_to_string(input)?)
+            .inputs(vec![fs::read_to_string(input)?])
             .build();
         let results = executor.execute(context).unwrap();
 
@@ -54,7 +54,8 @@ fn main() -> Result<()> {
         if let Some(e) = expected {
             println!(
                 "Correct Answer: {:#?}",
-                results.output == fs::read_to_string(e).expect("Invalid expected txt path")
+                *results.outputs.first().unwrap()
+                    == fs::read_to_string(e).expect("Invalid expected txt path")
             );
         }
     }

@@ -48,7 +48,7 @@ impl ExecutionStatus {
 #[derive(Debug)]
 pub struct ExecutionResult {
     pub status: ExecutionStatus,
-    pub output: String,
+    pub outputs: Vec<String>,
     pub error: String,
     pub time_ms: u32,
     pub time_execution_ms: u32,
