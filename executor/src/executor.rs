@@ -62,14 +62,17 @@ impl Executor {
             ])
             .output()?;
 
-        let mut outputs: Vec<String> = vec![];
+        let mut entries: Vec<_> = fs::read_dir(&inputs_path)?
+            .filter_map(Result::ok)
+            .filter(|e| e.path().extension().is_some_and(|e| e == "out"))
+            .collect();
 
-        for entry in fs::read_dir(&inputs_path)? {
-            let entry = entry?;
-            if entry.path().extension().is_some_and(|e| e == "out") {
-                outputs.push(fs::read_to_string(entry.path())?);
-            }
-        }
+        entries.sort_unstable_by_key(|f| f.file_name());
+
+        let outputs: Vec<_> = entries
+            .into_iter()
+            .filter_map(|e| fs::read_to_string(e.path()).ok())
+            .collect();
 
         let error = fs::read_to_string(path.join("error.txt"))?;
         let time = fs::read_to_string(path.join("time.txt"))?;
