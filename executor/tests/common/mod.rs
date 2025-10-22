@@ -1,6 +1,4 @@
-use executor::{
-    context::ExecutionContext, executor::Executor, language::Language, result::ExecutionResult,
-};
+use executor::{ExecutionContext, ExecutionResult, Executor, Language};
 
 pub fn execute(
     language: Language,

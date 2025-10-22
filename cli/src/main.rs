@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::{fs, path};
 
-use executor::{context, executor::Executor, language::Language};
+use executor::{ExecutionContext, Executor, Language};
 
 #[derive(Parser)]
 #[command(about)]
@@ -42,7 +42,7 @@ fn main() -> Result<()> {
     } = args.command
     {
         let executor = Executor::new();
-        let context = context::ExecutionContext::builder()
+        let context = ExecutionContext::builder()
             .language(Language::try_from(source.extension().unwrap().to_str().unwrap()).unwrap())
             .code(fs::read_to_string(source)?)
             .input(fs::read_to_string(input)?)
