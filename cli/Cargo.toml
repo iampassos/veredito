@@ -1,9 +1,0 @@
-[package]
-name = "cli"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-executor = { path = "../executor" }
-clap = { version = "4.5.49", features = ["derive"] }
-anyhow = "1.0.100"
